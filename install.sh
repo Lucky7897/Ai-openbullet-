@@ -14,7 +14,7 @@ echo "🔧 Updating System..."
 sudo apt update && sudo apt upgrade -y
 
 echo "🐍 Installing Python & Dependencies..."
-sudo apt install python3 python3-pip python3-venv nginx -y
+sudo apt install python3 python3-pip python3-venv nginx redis-server -y
 
 echo "🌐 Setting Up Django AI WebApp..."
 mkdir -p $PROJECT_DIR
@@ -361,102 +361,4 @@ cat > $APP_NAME/templates/admin_page.html <<EOL
 <html>
 <head>
     <title>Admin Page</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <h1>Admin Page</h1>
-    <p>Manage users, uploaded files, and AI models here.</p>
-</body>
-</html>
-EOL
-
-cat > $APP_NAME/templates/monitoring_page.html <<EOL
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Monitoring Page</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <h1>Monitoring Page</h1>
-    <p>View system health, active users, and recent activities here.</p>
-</body>
-</html>
-EOL
-
-echo "⚙️ Creating Django Admin Panel..."
-cat > $APP_NAME/admin.py <<EOL
-from django.contrib import admin
-from .models import TrainingFile, AIModel, ConfigFile, UserProfile
-
-@admin.register(TrainingFile)
-class TrainingFileAdmin(admin.ModelAdmin):
-    list_display = ["file", "uploaded_at"]
-
-@admin.register(AIModel)
-class AIModelAdmin(admin.ModelAdmin):
-    list_display = ["name", "description", "specs"]
-
-@admin.register(ConfigFile)
-class ConfigFileAdmin(admin.ModelAdmin):
-    list_display = ["file", "uploaded_at", "training_file"]
-
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ["user", "location", "birth_date"]
-EOL
-
-echo "🔄 Running Migrations..."
-python manage.py makemigrations $APP_NAME
-python manage.py migrate
-
-echo "👤 Creating Admin User..."
-echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'adminpass')" | python manage.py shell
-
-echo "🌐 Setting Up Gunicorn Service..."
-cat > /etc/systemd/system/$PROJECT_NAME.service <<EOL
-[Unit]
-Description=Gunicorn instance to serve $PROJECT_NAME
-After=network.target
-
-[Service]
-User=$USER
-Group=www-data
-WorkingDirectory=$PROJECT_DIR/$PROJECT_NAME
-ExecStart=$VENV_DIR/bin/gunicorn --workers 3 --bind unix:$PROJECT_DIR/$PROJECT_NAME.sock $PROJECT_NAME.wsgi:application
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-echo "🌍 Setting Up Nginx..."
-cat > /etc/nginx/sites-available/$PROJECT_NAME <<EOL
-server {
-    listen 80;
-    server_name _;
-
-    location /static/ {
-        root $PROJECT_DIR/$PROJECT_NAME;
-    }
-
-    location /media/ {
-        root $PROJECT_DIR/$PROJECT_NAME;
-    }
-
-    location / {
-        include proxy_params;
-        proxy_pass http://unix:$PROJECT_DIR/$PROJECT_NAME.sock;
-    }
-}
-EOL
-
-ln -s /etc/nginx/sites-available/$PROJECT_NAME /etc/nginx/sites-enabled
-
-echo "🔄 Restarting Services..."
-sudo systemctl daemon-reload
-sudo systemctl start $PROJECT_NAME
-sudo systemctl enable $PROJECT_NAME
-sudo systemctl restart nginx
-
-echo "✅ Installation Complete! Access via: http://your-server-ip/"
-echo "🔑 Admin Panel: http://your-server-ip/admin (Login: admin / adminpass)"
+    <link rel="stylesheet" type="text/css
